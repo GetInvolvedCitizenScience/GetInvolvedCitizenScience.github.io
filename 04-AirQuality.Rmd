@@ -1,0 +1,71 @@
+
+# Air Quality
+
+**Objective:** Use Arduino as an air quality sensor for either ozone or particulate matter.
+
+## Introduction: Air Quality
+
+Although there are many things that contribute to air quality, two of the most commonly measured pollutants are ozone (O$_3$) and particulate matter (PM), both of which are regulated by the Environmental Protection Agency.  The Georgia Department of Natural Resources even maintains a network of air quality stations that measure these things and stream the data live to the internet [http://www.air.dnr.state.ga.us/amp/](http://www.air.dnr.state.ga.us/amp/).  The Athens site is located near the intersection of College Station and Barnett Shoals Roads.  In this portion of the class, you'll use Arduino to collect data from either a PM sensor or an ozone sensor.
+
+### Good Ozone vs. Bad Ozone
+In the upper atmosphere (i.e. the stratosphere), ozone is a naturally occurring gas that blocks high energy ultraviolet (UV) radiation from the Sun.  It's similar to Earth's sunscreen: Without it, we would all be sunburnt and prone to skin cancer!  This is why the ozone hole, caused by destruction of ozone by chlorofluorocarbons (CFCs), was such a big problem.  However, ozone is a powerful oxidant, and attacks most things it comes into contact with.  This can include other gases, containers it's stored in, or human lungs.  Thus, at ground level (i.e. in the troposphere), ozone is a potent pollutant.  Further, ground level ozone is created in large part by human activities, so high levels of ozone can easily by controlled by pollution control strategies.  These things are outlined in the figure below. In this class, we'll look for qualitative changes in O$_3$ concentration, meaning simply whether it has gone up or down and not what the exact concentration is.
+
+```{r ozone, fig.cap = 'Atmospheric ozone.  Public domain image from wikipedia.org.', fig.align='center', echo=FALSE, fig.width = 5}
+knitr::include_graphics("https://upload.wikimedia.org/wikipedia/commons/e/ec/Atmospheric_ozone.svg")
+```
+
+### Particulate Matter
+Particulate matter consists of small liquid and/or solid particles suspended in the air as an aerosol.  PM is typically divided into two classes, both shown in Figure \ref{pm25}: (1) PM$_{10}$ ("PM ten"), defined as any PM less than 10$\mu$m (micrometers) in diameter and (2) PM$_2.5$ ("PM two point five"), which is any PM less than 2.5$\mu$m in diameter.  To put that in perspective, an average human hair is about 50$\mu$m in diameter.  PM$_{10}$ is generally considered to come from natural sources, such as dust storms.  PM$_{2.5}$ on the other hand is commonly anthropogenic (human-causes).  Of the two, PM$_{2.5}$ is most harmful to human health, and can cause respiratory and cardiovascular problems.  In addition to affecting human health and air quality, both types of PM affect climate by scattering and absorbing sunlight.  Particles that scatter sunlight usually result in a cooling effect, while particles that absorb sunlight have a warming effect on the Earth.  In this class, we're just concerned with getting a \textit{qualitative} measure of how much PM there is.  This means we only care about measuring whether the concentration has has gone up or down, rather than what the exact concentration or size distribution is.
+
+\begin{figure}[h]
+\centering
+\includegraphics[width = 0.5\textwidth]{Images/CH4/epa-pm25.jpg} 
+\caption{Size of PM$_{2.5}$.  Image from US EPA via (\url{http://insightshealthassociates.files.wordpress.com/2013/06/pm-2-5-from-epa.jpg})}.
+\label{pm25}	
+\end{figure}
+
+## Measuring Air Quality
+
+You'll be largely on your own to determine how to connect the sensors and determine the appropriate code to use.  Included at the end of this handout are several documents from the internet that contain helpful information to this regard.  These include the manufacturer's datasheets.
+
+### O$_3$ Sensor
+The ozone sensor contains a heater (i.e. resistor) made of a special material (tin dioxide, SnO$_2$) whose resistance changes based on the amount of ozone on it.  The ozone concentration can thus be determined by measuring the resistance across the heater.
+
+The datasheet for the ozone sensor says to use a load resistance of $\approx$ 10 k$\Omega$.  In the version of the sensor you're using, this has been built into the circuit board.  You need to read the voltage on the analog out pin of the sensor.  This is essentially the same as you did in Exercise 2 previously in the semester.
+
+1. Connect pins AO (analog out), 5V/$V_{cc}$, and ground to the corresponding pins on the Arduino.
+1. Use your code from Exercise 2 to measure the voltage from the sensor.
+1. Your code should look like this:
+
+```
+void setup() {							
+  Serial.begin(9600);		
+}
+
+void loop() {		
+  int sensorValue = analogRead(A0);				
+  float voltage = sensorValue * (5.0 / 1023.0);	
+  Serial.println(voltage);						
+  delay(1000);									
+}
+```
+
+1. If you think the sensor is working, place your fingers near the mesh screen.  Can you feel the warmth from the heating element?  If not, double check your connections.
+1. Once you've successfully gotten a reading from the sensor, program the Arduino to turn an LED on an off when the voltage reaches a specific value.  Make this value somewhere close to the value currently shown by the sensor so you can see it change.  Use an \inline{if()} statement like you did in Homework 2, but this time include an \inline{else()} clause to turn the light off when the voltage is below the specified value:
+
+```
+  if (voltage > 0.5) {		
+    digitalWrite(led, HIGH;
+  }
+  else {	
+      digitalWrite(led, LOW);
+    }
+  }
+```
+
+### PM Sensor
+The PM sensor contains an infrared LED and an infrared photodiode placed at approximately a right angle to each other.  As current is applied to a resistor in the sample chamber, it heats up and creates an updraft that carries particles through the sample chamber by convection.  These particles move between the LED and photodiode and scatter light, thereby changing the amount of light seen by the photodiode.  The circuitry on the PM sensor converts the signal to a high or low pulse, and the signal you need to read is the amount of time the signal is low.  The following site contains some very helpful code to get started.
+
+[http://www.davidholstius.com/wp-content/uploads/2012/05/ShinyeiPPD42NS_SerialOutput1.ino](http://www.davidholstius.com/wp-content/uploads/2012/05/ShinyeiPPD42NS_SerialOutput1.ino)
+
+## Logging Data

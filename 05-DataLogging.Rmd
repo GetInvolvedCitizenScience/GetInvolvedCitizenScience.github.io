@@ -1,0 +1,180 @@
+# Chapter 6: Data Logging
+
+**Objective:** Plot data on a computer screen and save data to an SD Card.
+
+## Introduction
+
+So far, you've used Arduino as an interface to sensors that reads and displays numbers on a computer screen.  Usually, it's more desirable to view a plot of the data.  This provides a way to visualize all the data at once and pick out trends.  Most modern scientific instruments provide a graphical display directly on the computer screen in real time, and also provide a way to save the data to a file to graph later with a graphing or data analysis program.  This exercise will walk you through both of those.
+
+## Interacting with the Data
+
+### Plotting in Real Time
+We've written a program using the programming software LabVIEW that reads data from the serial port (remember Arduino sends data to the serial port) and plots it in real time.  To use it:
+
+1. Go to the "Arduino Exercises" section of the eLC site and download the appropriate program for your sensor.  It will have the naming convention "Arduino_PlotData_Sensor".
+1. Connect your sensor/Arduino to the computer.
+1. Open the program you downloaded and follow the instruction in the user interface.
+
+### Saving Data to a File
+To save the data to a file, we'll use an SD (Secure Digital) card as portable memory (just like digital cameras) and an SD card ***shield*** (a pre-made add-on for Arduino).  Writing to a data file is similar to writing to the serial port, and uses the command `fileName.print()` or `fileName.println()`.  You'll need to modify your code to make it work.
+
+**O3 Sensor**
+
+1. At the top of your code (just below the comments), include the necessary *libraries*.  A library is a set of commands that can be accessed by the Arduino program.  Library files have the extension `.h`.
+```
+    #include <SPI.h>      // Serial Peripheral Interface 
+    #include <SD.h>	      // SD card library.
+    #undef int()		      // change default so stdlib will work
+    #include <stdlib.h>   // float to string fucntion
+```
+
+1. Now make sure all of the necessary variables are defined.
+```
+    numReadings * interval = averaging time
+    unsigned long interval = 100; // time between samples in ms
+    int numReadings = 10;         // no. readings (samples) to average
+    
+    int o3Pin    = A0;            // analog input for O3 sensor
+    int tempPin  = A1;            // analog input for temperature sensor
+    const int CS = 4;             // chip select pin for SD shield
+    float O3;
+    float temp;
+    int O3Value;
+    int tempValue;
+    char tempStr[6];
+    char O3str[8];
+    String header = "Elapsed\_ms, O3\_mV, Temp\_C";
+    String dataString;
+```
+
+1. Write the `setup()` routine.
+```
+    void setup() {
+      pinMode(CS, OUTPUT);
+      SD.begin(CS);     // initialize SD card
+      File dataFile = SD.open("datalog.txt", FILE\_WRITE);  // open file for   writing
+    
+      if(dataFile) {
+         dataFile.println(header);   // print header to data file
+         dataFile.close();           // close the file
+      }
+    
+      Serial.begin(9600);        // initialize serial communication at 9600 bits per second\\
+      Serial.println(header);    // print file header to serial port
+    }
+    }
+```
+
+1. Write the `loop()`.
+```
+    void loop() {
+      // sum readings over sampling interval
+      for (int i = 1; i < numReadings; i++) {
+         O3Value += analogRead(o3Pin);
+         tempValue += analogRead(tempPin);
+         delay(interval);
+      }
+    
+      // compute avg O3 voltage:
+      O3Value = O3Value / (numReadings);
+      O3 = O3Value * (5000.0 / 1023.0);
+      compute avg temperature:\\
+      tempValue = tempValue / numReadings;  
+      temp = tempValue * (5000.0 / 1023.0);   // convert temp bits to mV
+      temp = (temp - 500) / 10;               // convert temp voltage to degrees C
+    
+      dtostrf(O3, 4, 2, O3str);
+      dtostrf(temp, 3, 1, tempStr);
+    
+      dataString = String(millis()) + ", " + String(O3str) + ", " + String(tempStr);    // place data in single text string
+      Serial.println(dataString);         // print to serial port
+      File dataFile = SD.open("datalog.txt", FILE\_WRITE);  // open file for writing
+      if(dataFile) {
+        dataFile.println(dataString);     // print data to file
+        dataFile.close();                 // close the file
+      }
+    }
+```
+1. Make sure the SD card is loaded before trying to log data.
+1. After several minutes, try reading the data back off of your card using a SD card reader.
+
+**PM Sensor**
+
+1.  At the top of your code (just below the comments), include the necessary *libraries*.  A library is a set of commands the we want to make accessible during the program.  Library files have the extension `.h`.
+```
+    #include <SPI.h>  // Serial Peripheral Interface 
+    #include <SD.h>	 // SD card library. 
+    #undef int()		 // change default so stdlib will work 
+    #include <stdlib.h>  // float to string fucntion 
+```
+
+1. Now make sure all of the following variables are defined:
+```
+    int shinPin  = 8;           // input pin (digital) 
+    int tempPin  = A0;          // input pin for temp sensor (analog) 
+    int INTERVAL = 1000;        // sample duration (ms) 
+    float ALPHA  = 0.9;         // controls smoothing 
+    int CS       = 4;           // SD chip select pin
+    
+    unsigned long t0;           // time of last data dump 
+    unsigned long elapsed;      // time since last data dump (ms) 
+    unsigned long acc = 0;      // sum of time spent LOW 
+    float raw;                  // fraction of time spent LOW 
+    float filtered = 0.0;
+    float temp;
+    int tempValue;
+    
+    String header = "Elapsed\_ms, Raw\_percent, Filtered\_percent, Temp\_C"; \\
+    String dataString;  // character array for float conv. 
+    char tempStr[6]; // character array for float conv. 
+    char rawStr[9]; // character array for float conv. 
+    char filteredStr[9]; // character array for float conv.
+```
+
+1. Write the `setup()` routine.
+```
+    void setup() { 
+      pinMode(shinPin, INPUT); 
+      pinMode(CS, OUTPUT);
+      SD.begin(CS);                 // initialize SD card
+      File dataFile = SD.open("datalog.txt", FILE\_WRITE);  // open file for writing
+      if(dataFile) {
+        dataFile.println(header);   // print header to data file 
+        dataFile.close();           // close the file 
+      }
+      
+      Serial.begin(9600); \\
+      Serial.println(header);       // print file header to serial port
+    
+      t0 = millis();
+    }
+```
+
+1. Finally, write the `loop()` command.
+```
+    void loop() {
+      acc += pulseIn(shinPin, LOW);
+      elapsed = millis() - t0;
+      if (elapsed > INTERVAL) {
+        tempValue = analogRead(tempPin);       // read temp value (bits)
+        temp = tempValue * (5000.0 / 1023.0);  // convert temp bits to mV
+        temp = (temp - 500) / 10;              // convert temp voltage to degrees C
+        raw = acc / (elapsed * 10.0);          // expressed as percentage
+        filtered = ALPHA * filtered + (1.0 - ALPHA) * raw;  // smooth data
+        dtostrf(temp, 2, 1, tempStr);
+        dtostrf(raw, 2, 4, rawStr);
+        dtostrf(filtered, 2, 4, filteredStr);
+        dataString = String(millis()) + ", " + String(rawStr) + ", " + String(filteredStr) + ", " + String(tempStr);
+        Serial.println(dataString);
+        File dataFile = SD.open("datalog.txt", FILE\_WRITE);  // open file
+        if(dataFile) {
+          dataFile.println(dataString);        // print data to file
+          dataFile.close();           // close the file
+        }
+        acc = 0;
+        t0 = millis();
+      }
+    }
+```
+1. Make sure the SD card is loaded before trying to log data.
+1. After several minutes, try reading the data back off of your card using a SD card reader.

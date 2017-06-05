@@ -1,0 +1,18 @@
+--- 
+title: "Get Involved! Becoming a Citizen Scientist"
+author: "Al Fischer"
+date: '`r Sys.Date()`'
+output:
+  bookdown::pdf_book: default
+  bookdown::gitbook:
+    config:
+      download: pdf
+link-citations: yes
+documentclass: book
+site: bookdown::bookdown_site
+biblio-style: apalike
+---
+
+# Preface
+
+This guide will help you learn to use Arduino for Citizen Science.

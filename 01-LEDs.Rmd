@@ -1,0 +1,108 @@
+# Chapter 2: Blinking LED
+**Objective:** Use Arduino to output a signal and turn an LED on and off.
+
+## Introduction: What is Arduino?
+Arduino is an open-source platform for developing interactive electronic devices.  It provides a standard interface to Atmel *microcontrollers*, which in turn can be programmed by the user to perform specific tasks.  Arduino began in 2005 as a student project at the Interaction Design Institute Ivrea in Ivrea, Italy as a way to replace the more expensive microcontrollers the students were using at the time, and has since become very popular for hobby projects, citizen science tools, and even art installations.
+
+Using an Arduino requires a *program*, or a set of commands that are uploaded to the Arduino to have it perform specific tasks. In the Arduino community, the term *sketch* is used synonymously with program.  Examples of possible programs include having the Arduino measure things like temperature, light, or humidity, or control things like lights or motors.  Although the Arduino can run as a stand-alone device once programmed, it must be initially setup by a computer.  It is also possible to create a *graphic user interface* (GUI) to control things attached to the Arduino using a computer.  
+
+To program the Arduino, we'll use the *integrated devlopment environment* (IDE) available on the [Arduino website](http://www.arduino.cc).  The IDE is shown in Figure 1 below.  Arduino uses the computer language *C*--probably the most commonly used language in the world--but the IDE handles some of the programming behind the scenes to make it easier for the user.  In this exercise, we'll use an Arduino to turn a light-emitting diode (LED) on and off, and you'll experience Arduino and the IDE firsthand.  
+
+!["IDE"](./images/ArduinoIDE.jpg)
+
+## Lighting an LED with Arduino
+Our goal is to turn an LED on and off using an Arduino microcontroller.  You'll have to connect the LED to the microcontroller and write appropriate code to control it.  The blink example in the Arduino IDE under `File > Examples > Basics > Blink` may be helpful in getting started, but will need some editing to work properly with our LEDs. 
+
+### Connecting the LEDs
+
+The LEDs we have are RGB (red, green, blue) LEDs, and each color has a different terminal that's used to turn it on and off independently.  The LEDs are *common cathode*, meaning all the colors share a negative terminal and have their own positive terminals.  To turn the individual colors on and off, simply turn on the corresponding positive terminal (i.e. set it *high*).  The manufacturere provides a *pinout* of the LED that shows which pin turns on each color, is reprinted below in Figure 2.
+
+![pinout](images/pinout.jpg)
+<small> **Figure 2:** Dimensional drawing of the LED showing numbered pins (left) and schematic representation of the same LED (right). Reprinted from [the vendor's website](www.taydaelectronics.com/datasheets/A-1094.pdf).</small>
+
+To connect the LED:
+
+1. Connect the *cathode* (long terminal) to ground on the Arduino.
+1. Connect the other legs to digital pins on the Arduino, for example pins 11, 12, and 13.
+
+The final setup should look something like Figure 3:
+
+<center><img src="images/LED_bb.jpg" alt="Drawing" style="height: 275px;"/>     <img src="images/LED_schem.jpg" alt="Drawing" style="height: 275px;"/></center>
+<small> **Figure 3:** Visual representation of the LED-Arduino setup (left) and schematic representation of the same setup (right). </small>
+
+### Programming the Arduino
+
+1. Open the Arduino IDE and find the "Blink" example:
+
+    ```
+    File > Examples > Basics > Blink
+    ```
+    
+    The example code has all the features necessary for an Arduino program, and we'll go through it step-by-step.  The grey text at the top surrounded by `/*` or `//` dileneates informative comments about the code.  Just below that, the variables and constants (things to assign values to) are defined.  Here, the constant `led` has been assigned an integer (`int`) value of 13 to represent the LED attached to pin 13.
+
+1. At this point, assign variables for each color of the LED:
+
+    ```
+    int red   = 13
+    int blue  = 12
+    int green = 11
+    ```
+    
+    Just below the variable definitions is the `setup()` command, which is required for every Arduino program.  The `setup()` command only runs once when the program initializes, so anything containted within the curly braces happens only a single time.  In Arduino (actually C) commands are always followed by `()` and are automatically colored orange by the Arduino IDE.
+
+1.  For this program, we need to configure the LED pins to *output* (as opposed to input) a signal:
+    
+    ```
+    void setup() {
+        pinMode(red, OUTPUT);   // set pin 13 (red) to OUTPUT
+        pinMode(blue, OUTPUT);  // comments aren't read by Arduino
+        pinMode(green, OUTPUT); // so type whatever you want
+    }
+    ```
+    
+    > *Note that spaces and characters preceded by `//` aren't important for running the program, just for making it more legible to humans.  Use these comments to explain what your code is doing.  However, be sure to include all capital letters, brackets and semi-colons because they __are__ important.*
+    
+    
+    Next is the `loop()` command, which is also required by every Arduino program.  Anything in the in the `loop()` command is repeated as long as the program runs (i.e. anytime the Arduino is plugged in).  Any repetitive task, like turing the LED on and off, should go here.
+
+1.  Modify the existing code to turn on and off your favorite color:
+    
+    ```
+    void loop() {
+        digitalWrite(blue, HIGH); // turn color on by applying 5V
+        delay(1000);              // wait 1000 milliseconds
+        digitalWrite(blue, LOW);  // turn color off (set to 0V)
+        delay(1000);              // wait again before repeating
+    }
+    ```
+    
+    > *Every Arduino program must have `setup()` and `loop()` commands (even if they are empty).  `setup()` tells the microcontroller what to do once when it starts; `loop()` tells it what repetitive task to do.*
+
+1.  That's it! Check your code by pressing the round "verify" check mark in the upper left corner of the IDE.
+1.  If you don't get any errors, you're ready to upload your code:
+      1. Make sure you have selected the correct board type:
+    
+      ```
+      Tools > Board > Arduino Uno
+      ```
+    
+      and the correct serial port:
+   
+      ```
+      Tools > Port > COM X*
+      ```
+      
+      *You may have to try multiple COM ports to find the right one.
+    
+      2. Press the round "upload" arrow next to the verify button.
+Once your code is uploaded, you should see the color you chose flashing on the Arduino.  If it's not, go back a few steps and try and figure out why.
+
+
+      3. If your code works, try changing it around to do new things.  You can change the amount of time the LED stays on (the duty cycle) or change which colors are turned on.
+
+
+## Additional Resources
+
+1. Blum, Jeremy. *Exploring Arduino: Tools and techniques for electronics wizardy* "Chapter 1: Getting up and Blinking with an LED."  Wiley, 2013.
+1. [Online documentation for blink example](http://arduino.cc/en/Tutorial/Blink)
+1. [Online command dictionary](http://arduino.cc/en/Reference/HomePage)
